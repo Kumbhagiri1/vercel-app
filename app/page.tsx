@@ -1,10 +1,11 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from 'react';
+import { supabase } from '@/lib/supabaseClient'; // Ensure you created this file
 
 // --- Components ---
 
-const Navbar = ({ currentPage, navigateTo, toggleMobileMenu, isMobileMenuOpen }: any) => {
+const Navbar = ({ currentPage, navigateTo, toggleMobileMenu, isMobileMenuOpen, session }: any) => {
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 backdrop-blur-xl bg-slate-900/90 border-b border-white/10">
       <div className="max-w-7xl mx-auto px-6 py-4">
@@ -31,12 +32,23 @@ const Navbar = ({ currentPage, navigateTo, toggleMobileMenu, isMobileMenuOpen }:
                 {page === 'home' ? 'Home' : page === 'students' ? 'For Students' : page === 'teachers' ? 'For Teachers' : 'Contact'}
               </button>
             ))}
-            <button
-              onClick={() => navigateTo('chat')}
-              className="px-6 py-2 bg-gradient-to-r from-teal-500 to-blue-600 rounded-lg text-white font-medium hover:shadow-lg hover:shadow-teal-500/50 transition-all"
-            >
-              Try AI Tutor
-            </button>
+            
+            {/* Login / Chat Button Logic */}
+            {!session ? (
+              <button
+                onClick={() => navigateTo('login')}
+                className="px-6 py-2 border border-white/20 rounded-lg text-white font-medium hover:bg-white/10 transition-all"
+              >
+                Login
+              </button>
+            ) : (
+              <button
+                onClick={() => navigateTo('chat')}
+                className="px-6 py-2 bg-gradient-to-r from-teal-500 to-blue-600 rounded-lg text-white font-medium hover:shadow-lg hover:shadow-teal-500/50 transition-all"
+              >
+                Open AI Tutor
+              </button>
+            )}
           </div>
 
           <button onClick={toggleMobileMenu} className="md:hidden text-white">
@@ -62,12 +74,21 @@ const Navbar = ({ currentPage, navigateTo, toggleMobileMenu, isMobileMenuOpen }:
                 {page}
               </button>
             ))}
-            <button
-              onClick={() => navigateTo('chat')}
-              className="w-full px-6 py-2 bg-gradient-to-r from-teal-500 to-blue-600 rounded-lg text-white font-medium"
-            >
-              Try AI Tutor
-            </button>
+             {!session ? (
+              <button
+                onClick={() => navigateTo('login')}
+                className="block w-full text-left text-gray-300 hover:text-white py-2"
+              >
+                Login
+              </button>
+            ) : (
+              <button
+                onClick={() => navigateTo('chat')}
+                className="w-full px-6 py-2 bg-gradient-to-r from-teal-500 to-blue-600 rounded-lg text-white font-medium"
+              >
+                Open AI Tutor
+              </button>
+            )}
           </div>
         )}
       </div>
@@ -76,6 +97,101 @@ const Navbar = ({ currentPage, navigateTo, toggleMobileMenu, isMobileMenuOpen }:
 };
 
 // --- Page Components ---
+
+const LoginPage = ({ navigateTo }: any) => {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const checkSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        navigateTo('chat');
+      }
+    };
+    checkSession();
+  }, [navigateTo]);
+
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError(null);
+
+    try {
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (error) throw error;
+      
+      // On success, navigate to chat
+      navigateTo('chat');
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen pt-20 flex items-center justify-center bg-gradient-to-br from-slate-950 via-blue-950 to-slate-900 text-white p-4">
+      <div className="relative z-10 w-full max-w-md backdrop-blur-xl bg-white/5 border border-white/10 rounded-2xl p-8 shadow-2xl">
+        <div className="text-center mb-8">
+          <div className="w-12 h-12 bg-gradient-to-br from-teal-500 to-blue-600 rounded-xl flex items-center justify-center mx-auto mb-4">
+            <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+            </svg>
+          </div>
+          <h1 className="text-2xl font-bold">Welcome Back</h1>
+          <p className="text-gray-400 text-sm mt-2">Sign in to continue to your dashboard</p>
+        </div>
+
+        {error && (
+          <div className="mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-lg flex items-center gap-3 text-red-400 text-sm">
+            <span>{error}</span>
+          </div>
+        )}
+
+        <form onSubmit={handleLogin} className="space-y-5">
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-1">Email Address</label>
+            <input
+              type="email"
+              required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="w-full p-3 bg-white/5 border border-white/10 rounded-lg focus:border-teal-500/50 focus:bg-white/10 outline-none transition-all text-white placeholder-gray-500"
+              placeholder="you@example.com"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-1">Password</label>
+            <input
+              type="password"
+              required
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="w-full p-3 bg-white/5 border border-white/10 rounded-lg focus:border-teal-500/50 focus:bg-white/10 outline-none transition-all text-white placeholder-gray-500"
+              placeholder="••••••••"
+            />
+          </div>
+
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full p-3 bg-gradient-to-r from-teal-500 to-blue-600 rounded-lg text-white font-medium hover:shadow-lg hover:shadow-teal-500/20 transition-all disabled:opacity-70 disabled:cursor-not-allowed flex justify-center items-center"
+          >
+            {loading ? "Signing In..." : "Sign In"}
+          </button>
+        </form>
+      </div>
+    </div>
+  );
+};
 
 const HomePage = ({ navigateTo }: any) => (
   <div className="min-h-screen pt-20 bg-gradient-to-br from-slate-950 via-blue-950 to-slate-900 text-white relative overflow-hidden">
@@ -94,7 +210,7 @@ const HomePage = ({ navigateTo }: any) => (
           Empowering students and assisting teachers with the world's most advanced School AI. Powered by TDS Data Labs.
         </p>
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
-          <button onClick={() => navigateTo('chat')} className="px-8 py-4 bg-gradient-to-r from-teal-500 to-blue-600 rounded-xl text-white font-medium text-lg hover:shadow-lg hover:shadow-teal-500/50 transition-all">
+          <button onClick={() => navigateTo('login')} className="px-8 py-4 bg-gradient-to-r from-teal-500 to-blue-600 rounded-xl text-white font-medium text-lg hover:shadow-lg hover:shadow-teal-500/50 transition-all">
             Try the AI Tutor
           </button>
           <button onClick={() => navigateTo('contact')} className="px-8 py-4 backdrop-blur-xl bg-white/10 border border-white/20 rounded-xl text-white font-medium text-lg hover:bg-white/20 transition-all">
@@ -577,6 +693,22 @@ const App = () => {
   const [currentPage, setCurrentPage] = useState('home');
   const [chatInitialMessage, setChatInitialMessage] = useState('');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [session, setSession] = useState<any>(null);
+
+  // Check Supabase session
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+    });
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
 
   const navigateTo = (page: string, initialMsg = '') => {
     setCurrentPage(page);
@@ -598,6 +730,7 @@ const App = () => {
         navigateTo={navigateTo} 
         toggleMobileMenu={toggleMobileMenu}
         isMobileMenuOpen={isMobileMenuOpen}
+        session={session}
       />
 
       <main>
@@ -606,9 +739,11 @@ const App = () => {
         {currentPage === 'teachers' && <TeachersPage />}
         {currentPage === 'contact' && <ContactPage />}
         {currentPage === 'chat' && <ChatPage initialMessage={chatInitialMessage} />}
+        {currentPage === 'login' && <LoginPage navigateTo={navigateTo} />}
       </main>
 
-      {currentPage !== 'chat' && <FloatingChatWidget />}
+      {/* Hide floating widget on chat page and login page */}
+      {currentPage !== 'chat' && currentPage !== 'login' && <FloatingChatWidget />}
     </div>
   );
 };
