@@ -46,8 +46,11 @@ export default function SchoolAIChatUI() {
     try {
       const res = await fetch(
   "https://n8nclient.in/webhook/school_ai?message=" +
-    encodeURIComponent(userMessage)
+    encodeURIComponent(userMessage.text)
 );
+
+const data = await res.json();
+
       const data = await res.json();
 
       const aiMessage: Message = {
