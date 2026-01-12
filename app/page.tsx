@@ -44,17 +44,10 @@ export default function SchoolAIChatUI() {
     setIsTyping(true);
 
     try {
-      const res = await fetch("https://n8nclient.in/webhook/school_ai", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          sessionId: "school-ai-user",
-          message: userMessage.text,
-        }),
-      });
-
+      const res = await fetch(
+  "https://n8nclient.in/webhook/school_ai?message=" +
+    encodeURIComponent(userMessage)
+);
       const data = await res.json();
 
       const aiMessage: Message = {
