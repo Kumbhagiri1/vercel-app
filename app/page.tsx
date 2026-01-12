@@ -14,7 +14,7 @@ export default function Page() {
     {
       id: 1,
       type: "ai",
-      text: "Hello! I’m School AI by TalentDataSupply. How can I help you today?",
+      text: "Hello! I'm School AI by TalentDataSupply. How can I help you today?",
     },
   ]);
   const [input, setInput] = useState("");
@@ -39,33 +39,31 @@ export default function Page() {
     setIsTyping(true);
 
     try {
+      // FIXED: Single fetch call with correct URL encoding
       const response = await fetch(
         "https://n8nclient.in/webhook/school_ai?message=" +
           encodeURIComponent(text)
       );
 
-      const response = await fetch(
-  "https://n8nclient.in/webhook/school_ai?message=" +
-    encodeURIComponent(text)
-);
+      // FIXED: Parse as text (not JSON) since webhook returns plain text
+      const responseText = await response.text();
 
-const json = await response.json();
-
-setMessages((prev) => [
-  ...prev,
-  {
-    id: Date.now() + 1,
-    type: "ai",
-    text: json.answer ?? "No answer returned",
-  },
-]);
-    } catch {
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: Date.now() + 1,
+          type: "ai",
+          text: responseText || "No answer returned",
+        },
+      ]);
+    } catch (error) {
+      console.error("Error:", error);
       setMessages((prev) => [
         ...prev,
         {
           id: Date.now() + 2,
           type: "ai",
-          text: "⚠️ Error connecting to School AI service.",
+          text: "⚠️ Error connecting to School AI service. Please try again.",
         },
       ]);
     } finally {
@@ -104,7 +102,7 @@ setMessages((prev) => [
 
           <button
             onClick={exportChat}
-            className="mt-auto p-4 rounded-xl bg-emerald-500/20 border border-emerald-500/30"
+            className="mt-auto p-4 rounded-xl bg-emerald-500/20 border border-emerald-500/30 hover:bg-emerald-500/30 transition-all"
           >
             <Download className="inline w-5 h-5 mr-2" />
             Export Chat
@@ -115,7 +113,10 @@ setMessages((prev) => [
       {/* Main */}
       <div className="flex-1 flex flex-col">
         <div className="p-4 border-b border-white/10 flex justify-between">
-          <button onClick={() => setSidebarOpen(!sidebarOpen)}>
+          <button 
+            onClick={() => setSidebarOpen(!sidebarOpen)}
+            className="p-2 hover:bg-white/10 rounded-lg transition-all"
+          >
             {sidebarOpen ? <X /> : <Menu />}
           </button>
           <span className="text-sm text-gray-400">School AI • Online</span>
@@ -142,8 +143,12 @@ setMessages((prev) => [
           ))}
 
           {isTyping && (
-            <div className="bg-white/10 p-4 rounded-2xl w-fit animate-pulse">
-              School AI is typing…
+            <div className="bg-white/10 p-4 rounded-2xl w-fit">
+              <div className="flex gap-2">
+                <div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce"></div>
+                <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+                <div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+              </div>
             </div>
           )}
 
@@ -160,13 +165,14 @@ setMessages((prev) => [
                 handleSend();
               }
             }}
-            className="flex-1 bg-transparent border border-white/20 rounded-2xl p-4"
+            className="flex-1 bg-transparent border border-white/20 rounded-2xl p-4 outline-none focus:border-purple-500/50 transition-all resize-none"
             placeholder="Ask School AI…"
+            rows={1}
           />
           <button
             onClick={handleSend}
             disabled={!input.trim()}
-            className="p-4 bg-purple-600 rounded-2xl disabled:opacity-50"
+            className="p-4 bg-purple-600 rounded-2xl disabled:opacity-50 hover:bg-purple-700 transition-all"
           >
             <Send />
           </button>
