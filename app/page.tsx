@@ -275,7 +275,12 @@ const ContactPage = () => {
                 <option value="teacher" className="bg-slate-900">Teacher</option>
                 <option value="admin" className="bg-slate-900">Administrator</option>
               </select>
-              <textarea placeholder="Message" rows="4" required className="w-full p-4 bg-white/5 border border-white/20 rounded-lg outline-none focus:border-teal-500/50 transition-all resize-none text-white"></textarea>
+              <textarea 
+                placeholder="Message" 
+                rows={4} 
+                required 
+                className="w-full p-4 bg-white/5 border border-white/20 rounded-lg outline-none focus:border-teal-500/50 transition-all resize-none text-white"
+              ></textarea>
               <button type="submit" className="w-full p-4 bg-gradient-to-r from-teal-500 to-blue-600 rounded-lg text-white font-medium hover:shadow-lg hover:shadow-teal-500/50 transition-all">
                 Send Message
               </button>
