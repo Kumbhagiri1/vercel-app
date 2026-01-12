@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
-import { Send, Download, FileText, Sparkles, Menu, X } from "lucide-react";
+import { Send, Download, Sparkles, Menu, X } from "lucide-react";
 
 type Message = {
   id: number;
@@ -14,7 +14,7 @@ export default function SchoolAIChatUI() {
     {
       id: 1,
       type: "ai",
-      text: "Hello! I’m School AI by TalentDataSupply. How can I help you learn today?",
+      text: "Hello! I’m School AI by TalentDataSupply. How can I help you today?",
     },
   ]);
   const [input, setInput] = useState("");
@@ -22,58 +22,57 @@ export default function SchoolAIChatUI() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  };
-
   useEffect(() => {
-    scrollToBottom();
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, isTyping]);
 
-async function handleSend() {
-  if (!input.trim()) return;
+  async function handleSend() {
+    if (!input.trim()) return;
 
-  const userMessage: Message = {
-    id: Date.now(),
-    type: "user",
-    text: input,
-  };
+    const userText = input;
 
-  setMessages((prev) => [...prev, userMessage]);
-  setInput("");
-  setIsTyping(true);
-
-  try {
-    const res = await fetch(
-      "https://n8nclient.in/webhook/school_ai?message=" +
-        encodeURIComponent(userMessage.text)
-    );
-
-    const responseData = await res.json(); // 👈 renamed from `data`
-
-    const aiMessage: Message = {
-      id: Date.now() + 1,
-      type: "ai",
-      text: responseData.answer || "No response received",
+    const userMessage: Message = {
+      id: Date.now(),
+      type: "user",
+      text: userText,
     };
 
-    setMessages((prev) => [...prev, aiMessage]);
-  } catch (error) {
-    setMessages((prev) => [
-      ...prev,
-      {
-        id: Date.now() + 2,
+    setMessages((prev) => [...prev, userMessage]);
+    setInput("");
+    setIsTyping(true);
+
+    try {
+      const res = await fetch(
+        "https://n8nclient.in/webhook/school_ai?message=" +
+          encodeURIComponent(userText)
+      );
+
+      const responseData: { answer?: string } = await res.json();
+
+      const aiMessage: Message = {
+        id: Date.now() + 1,
         type: "ai",
-        text: "⚠️ Error connecting to School AI service.",
-      },
-    ]);
-  } finally {
-    setIsTyping(false);
+        text:
+          responseData.answer ??
+          "I couldn’t find an answer for that. Please try again.",
+      };
+
+      setMessages((prev) => [...prev, aiMessage]);
+    } catch (error) {
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: Date.now() + 2,
+          type: "ai",
+          text: "⚠️ Error connecting to School AI service.",
+        },
+      ]);
+    } finally {
+      setIsTyping(false);
+    }
   }
-}
 
-
-  const exportToDoc = () => {
+  function exportToDoc() {
     const content = messages
       .map((m) => `${m.type === "user" ? "You" : "School AI"}: ${m.text}`)
       .join("\n\n");
@@ -85,34 +84,32 @@ async function handleSend() {
     a.download = `school-ai-chat-${Date.now()}.txt`;
     a.click();
     URL.revokeObjectURL(url);
-  };
+  }
 
   return (
     <div className="flex h-screen bg-gradient-to-br from-slate-950 via-purple-950 to-slate-900 text-white overflow-hidden">
-      {/* Background */}
-      <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute w-96 h-96 bg-purple-500/10 rounded-full blur-3xl -top-48 -left-48 animate-pulse"></div>
-        <div className="absolute w-96 h-96 bg-blue-500/10 rounded-full blur-3xl -bottom-48 -right-48 animate-pulse"></div>
-      </div>
-
       {/* Sidebar */}
-      <div className={`${sidebarOpen ? "w-80" : "w-0"} transition-all duration-300`}>
-        <div
-          className={`${sidebarOpen ? "opacity-100" : "opacity-0"} transition-opacity duration-300 h-full backdrop-blur-xl bg-white/5 border-r border-white/10 p-6 flex flex-col`}
-        >
+      <div
+        className={`${
+          sidebarOpen ? "w-72" : "w-0"
+        } transition-all duration-300`}
+      >
+        <div className="h-full backdrop-blur-xl bg-white/5 border-r border-white/10 p-6 flex flex-col">
           <div className="flex items-center gap-3 mb-8">
             <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-blue-500 rounded-xl flex items-center justify-center">
               <Sparkles className="w-6 h-6" />
             </div>
             <div>
               <h1 className="text-xl font-bold">School AI</h1>
-              <p className="text-xs text-gray-400">by TalentDataSupply</p>
+              <p className="text-xs text-gray-400">
+                by TalentDataSupply
+              </p>
             </div>
           </div>
 
           <button
             onClick={exportToDoc}
-            className="mt-auto w-full p-4 rounded-xl bg-gradient-to-r from-emerald-500/20 to-teal-500/20 border border-emerald-500/30 hover:border-emerald-500/50 transition-all flex items-center justify-center gap-2 font-medium"
+            className="mt-auto w-full p-4 rounded-xl bg-gradient-to-r from-emerald-500/20 to-teal-500/20 border border-emerald-500/30 hover:border-emerald-500/50 transition-all flex items-center justify-center gap-2"
           >
             <Download className="w-5 h-5" />
             Export Chat
@@ -120,8 +117,8 @@ async function handleSend() {
         </div>
       </div>
 
-      {/* Main Chat */}
-      <div className="flex-1 flex flex-col relative z-10">
+      {/* Main Area */}
+      <div className="flex-1 flex flex-col">
         {/* Header */}
         <div className="backdrop-blur-xl bg-white/5 border-b border-white/10 p-4 flex items-center justify-between">
           <button
@@ -140,7 +137,9 @@ async function handleSend() {
           {messages.map((m) => (
             <div
               key={m.id}
-              className={`flex ${m.type === "user" ? "justify-end" : "justify-start"}`}
+              className={`flex ${
+                m.type === "user" ? "justify-end" : "justify-start"
+              }`}
             >
               <div
                 className={`max-w-2xl p-4 rounded-2xl ${
@@ -156,8 +155,8 @@ async function handleSend() {
 
           {isTyping && (
             <div className="flex justify-start">
-              <div className="p-4 rounded-2xl bg-white/10 border border-white/20">
-                <span className="animate-pulse">School AI is typing…</span>
+              <div className="p-4 rounded-2xl bg-white/10 border border-white/20 animate-pulse">
+                School AI is typing…
               </div>
             </div>
           )}
