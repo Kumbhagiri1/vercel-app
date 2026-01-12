@@ -2,7 +2,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 // FIX 1: Use relative path to ensure it finds the file
-import { supabase } from '../lib/supabaseClient'; 
+import { supabase } from './lib/supabaseClient';
 
 // --- Components ---
 
@@ -698,8 +698,9 @@ const App = () => {
 
   // Check Supabase session
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
+    // FIX: Added ": any" to response to satisfy TypeScript
+    supabase.auth.getSession().then((response: any) => {
+      setSession(response.data.session);
     });
 
     const {
@@ -710,7 +711,7 @@ const App = () => {
 
     return () => subscription.unsubscribe();
   }, []);
-
+  
   const navigateTo = (page: string, initialMsg = '') => {
     setCurrentPage(page);
     setIsMobileMenuOpen(false);
