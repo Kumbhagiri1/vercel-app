@@ -44,16 +44,21 @@ export default function Page() {
           encodeURIComponent(text)
       );
 
-      const json: { answer?: string } = await response.json();
+      const response = await fetch(
+  "https://n8nclient.in/webhook/school_ai?message=" +
+    encodeURIComponent(text)
+);
 
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: Date.now() + 1,
-          type: "ai",
-          text: json.answer ?? "No answer returned.",
-        },
-      ]);
+const json = await response.json();
+
+setMessages((prev) => [
+  ...prev,
+  {
+    id: Date.now() + 1,
+    type: "ai",
+    text: json.answer ?? "No answer returned",
+  },
+]);
     } catch {
       setMessages((prev) => [
         ...prev,
