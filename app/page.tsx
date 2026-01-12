@@ -9,7 +9,7 @@ type Message = {
   text: string;
 };
 
-export default function SchoolAIChatUI() {
+export default function Page() {
   const [messages, setMessages] = useState<Message[]>([
     {
       id: 1,
@@ -29,36 +29,32 @@ export default function SchoolAIChatUI() {
   async function handleSend() {
     if (!input.trim()) return;
 
-    const userText = input;
+    const text = input;
 
-    const userMessage: Message = {
-      id: Date.now(),
-      type: "user",
-      text: userText,
-    };
-
-    setMessages((prev) => [...prev, userMessage]);
+    setMessages((prev) => [
+      ...prev,
+      { id: Date.now(), type: "user", text },
+    ]);
     setInput("");
     setIsTyping(true);
 
     try {
-      const res = await fetch(
+      const response = await fetch(
         "https://n8nclient.in/webhook/school_ai?message=" +
-          encodeURIComponent(userText)
+          encodeURIComponent(text)
       );
 
-      const responseData: { answer?: string } = await res.json();
+      const json: { answer?: string } = await response.json();
 
-      const aiMessage: Message = {
-        id: Date.now() + 1,
-        type: "ai",
-        text:
-          responseData.answer ??
-          "I couldn’t find an answer for that. Please try again.",
-      };
-
-      setMessages((prev) => [...prev, aiMessage]);
-    } catch (error) {
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: Date.now() + 1,
+          type: "ai",
+          text: json.answer ?? "No answer returned.",
+        },
+      ]);
+    } catch {
       setMessages((prev) => [
         ...prev,
         {
@@ -72,7 +68,7 @@ export default function SchoolAIChatUI() {
     }
   }
 
-  function exportToDoc() {
+  function exportChat() {
     const content = messages
       .map((m) => `${m.type === "user" ? "You" : "School AI"}: ${m.text}`)
       .join("\n\n");
@@ -87,52 +83,39 @@ export default function SchoolAIChatUI() {
   }
 
   return (
-    <div className="flex h-screen bg-gradient-to-br from-slate-950 via-purple-950 to-slate-900 text-white overflow-hidden">
+    <div className="flex h-screen bg-gradient-to-br from-slate-950 via-purple-950 to-slate-900 text-white">
       {/* Sidebar */}
-      <div
-        className={`${
-          sidebarOpen ? "w-72" : "w-0"
-        } transition-all duration-300`}
-      >
-        <div className="h-full backdrop-blur-xl bg-white/5 border-r border-white/10 p-6 flex flex-col">
+      <div className={`${sidebarOpen ? "w-72" : "w-0"} transition-all`}>
+        <div className="h-full bg-white/5 border-r border-white/10 p-6 flex flex-col">
           <div className="flex items-center gap-3 mb-8">
             <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-blue-500 rounded-xl flex items-center justify-center">
               <Sparkles className="w-6 h-6" />
             </div>
             <div>
               <h1 className="text-xl font-bold">School AI</h1>
-              <p className="text-xs text-gray-400">
-                by TalentDataSupply
-              </p>
+              <p className="text-xs text-gray-400">by TalentDataSupply</p>
             </div>
           </div>
 
           <button
-            onClick={exportToDoc}
-            className="mt-auto w-full p-4 rounded-xl bg-gradient-to-r from-emerald-500/20 to-teal-500/20 border border-emerald-500/30 hover:border-emerald-500/50 transition-all flex items-center justify-center gap-2"
+            onClick={exportChat}
+            className="mt-auto p-4 rounded-xl bg-emerald-500/20 border border-emerald-500/30"
           >
-            <Download className="w-5 h-5" />
+            <Download className="inline w-5 h-5 mr-2" />
             Export Chat
           </button>
         </div>
       </div>
 
-      {/* Main Area */}
+      {/* Main */}
       <div className="flex-1 flex flex-col">
-        {/* Header */}
-        <div className="backdrop-blur-xl bg-white/5 border-b border-white/10 p-4 flex items-center justify-between">
-          <button
-            onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="p-2 hover:bg-white/10 rounded-lg"
-          >
+        <div className="p-4 border-b border-white/10 flex justify-between">
+          <button onClick={() => setSidebarOpen(!sidebarOpen)}>
             {sidebarOpen ? <X /> : <Menu />}
           </button>
-          <span className="text-sm text-gray-400">
-            School AI • Online
-          </span>
+          <span className="text-sm text-gray-400">School AI • Online</span>
         </div>
 
-        {/* Messages */}
         <div className="flex-1 overflow-y-auto p-6 space-y-4">
           {messages.map((m) => (
             <div
@@ -142,10 +125,10 @@ export default function SchoolAIChatUI() {
               }`}
             >
               <div
-                className={`max-w-2xl p-4 rounded-2xl ${
+                className={`max-w-xl p-4 rounded-2xl ${
                   m.type === "user"
-                    ? "bg-gradient-to-r from-purple-500 to-blue-500"
-                    : "backdrop-blur-xl bg-white/10 border border-white/20"
+                    ? "bg-purple-600"
+                    : "bg-white/10 border border-white/20"
                 }`}
               >
                 {m.text}
@@ -154,39 +137,34 @@ export default function SchoolAIChatUI() {
           ))}
 
           {isTyping && (
-            <div className="flex justify-start">
-              <div className="p-4 rounded-2xl bg-white/10 border border-white/20 animate-pulse">
-                School AI is typing…
-              </div>
+            <div className="bg-white/10 p-4 rounded-2xl w-fit animate-pulse">
+              School AI is typing…
             </div>
           )}
 
           <div ref={messagesEndRef} />
         </div>
 
-        {/* Input */}
-        <div className="p-6 backdrop-blur-xl bg-white/5 border-t border-white/10">
-          <div className="flex gap-3">
-            <textarea
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && !e.shiftKey) {
-                  e.preventDefault();
-                  handleSend();
-                }
-              }}
-              placeholder="Ask School AI…"
-              className="flex-1 bg-transparent border border-white/20 rounded-2xl p-4 outline-none resize-none"
-            />
-            <button
-              onClick={handleSend}
-              disabled={!input.trim()}
-              className="p-4 bg-gradient-to-r from-purple-500 to-blue-500 rounded-2xl disabled:opacity-50"
-            >
-              <Send />
-            </button>
-          </div>
+        <div className="p-6 border-t border-white/10 flex gap-3">
+          <textarea
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && !e.shiftKey) {
+                e.preventDefault();
+                handleSend();
+              }
+            }}
+            className="flex-1 bg-transparent border border-white/20 rounded-2xl p-4"
+            placeholder="Ask School AI…"
+          />
+          <button
+            onClick={handleSend}
+            disabled={!input.trim()}
+            className="p-4 bg-purple-600 rounded-2xl disabled:opacity-50"
+          >
+            <Send />
+          </button>
         </div>
       </div>
     </div>
