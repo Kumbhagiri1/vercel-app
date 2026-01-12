@@ -30,49 +30,48 @@ export default function SchoolAIChatUI() {
     scrollToBottom();
   }, [messages, isTyping]);
 
-  async function handleSend() {
-    if (!input.trim()) return;
+async function handleSend() {
+  if (!input.trim()) return;
 
-    const userMessage: Message = {
-      id: Date.now(),
-      type: "user",
-      text: input,
+  const userMessage: Message = {
+    id: Date.now(),
+    type: "user",
+    text: input,
+  };
+
+  setMessages((prev) => [...prev, userMessage]);
+  setInput("");
+  setIsTyping(true);
+
+  try {
+    const res = await fetch(
+      "https://n8nclient.in/webhook/school_ai?message=" +
+        encodeURIComponent(userMessage.text)
+    );
+
+    const responseData = await res.json(); // 👈 renamed from `data`
+
+    const aiMessage: Message = {
+      id: Date.now() + 1,
+      type: "ai",
+      text: responseData.answer || "No response received",
     };
 
-    setMessages((prev) => [...prev, userMessage]);
-    setInput("");
-    setIsTyping(true);
-
-    try {
-      const res = await fetch(
-  "https://n8nclient.in/webhook/school_ai?message=" +
-    encodeURIComponent(userMessage.text)
-);
-
-const data = await res.json();
-
-      const data = await res.json();
-
-      const aiMessage: Message = {
-        id: Date.now() + 1,
+    setMessages((prev) => [...prev, aiMessage]);
+  } catch (error) {
+    setMessages((prev) => [
+      ...prev,
+      {
+        id: Date.now() + 2,
         type: "ai",
-        text: data.answer || "I couldn’t find an answer for that yet.",
-      };
-
-      setMessages((prev) => [...prev, aiMessage]);
-    } catch (error) {
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: Date.now() + 2,
-          type: "ai",
-          text: "⚠️ Error connecting to School AI service.",
-        },
-      ]);
-    } finally {
-      setIsTyping(false);
-    }
+        text: "⚠️ Error connecting to School AI service.",
+      },
+    ]);
+  } finally {
+    setIsTyping(false);
   }
+}
+
 
   const exportToDoc = () => {
     const content = messages
