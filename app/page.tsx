@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from 'react';
-import { supabase } from '@/lib/supabaseClient'; // Ensure you created this file
+// FIX 1: Use relative path to ensure it finds the file
+import { supabase } from '../lib/supabaseClient'; 
 
 // --- Components ---
 
@@ -742,7 +743,6 @@ const App = () => {
         {currentPage === 'login' && <LoginPage navigateTo={navigateTo} />}
       </main>
 
-      {/* Hide floating widget on chat page and login page */}
       {currentPage !== 'chat' && currentPage !== 'login' && <FloatingChatWidget />}
     </div>
   );
