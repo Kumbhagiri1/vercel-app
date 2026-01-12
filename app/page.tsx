@@ -1,19 +1,43 @@
+"use client";
+
+import { useState } from "react";
+
 export default function Home() {
+  const [messages, setMessages] = useState<string[]>([]);
+  const [input, setInput] = useState("");
+
+  function sendMessage() {
+    if (!input.trim()) return;
+
+    setMessages([...messages, "You: " + input]);
+    setInput("");
+  }
+
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center bg-zinc-50 px-6 text-center dark:bg-black">
-      <h1 className="text-4xl font-bold tracking-tight text-black dark:text-white">
-        📚 School AI
-      </h1>
+    <main style={{ maxWidth: 600, margin: "40px auto", padding: 20 }}>
+      <h1>📚 School AI</h1>
 
-      <p className="mt-4 max-w-xl text-lg text-zinc-600 dark:text-zinc-400">
-        Your AI-powered school assistant. Ask questions, learn concepts, and
-        explore your study materials intelligently.
-      </p>
+      <div
+        style={{
+          border: "1px solid #ccc",
+          padding: 10,
+          minHeight: 300,
+          marginTop: 20,
+        }}
+      >
+        {messages.map((msg, i) => (
+          <p key={i}>{msg}</p>
+        ))}
+      </div>
 
-      <div className="mt-8">
-        <button className="rounded-xl bg-black px-6 py-3 text-white hover:bg-zinc-800 dark:bg-white dark:text-black dark:hover:bg-zinc-200">
-          Start Learning
-        </button>
+      <div style={{ display: "flex", gap: 10, marginTop: 10 }}>
+        <input
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          style={{ flex: 1, padding: 8 }}
+          placeholder="Ask something..."
+        />
+        <button onClick={sendMessage}>Send</button>
       </div>
     </main>
   );
