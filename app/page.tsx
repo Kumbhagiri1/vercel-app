@@ -1,8 +1,8 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from 'react';
-// FIX 1: Use relative path to ensure it finds the file
-import { supabase } from './lib/supabaseClient';
+// Import Supabase client (ensure lib folder is at project root)
+import { supabase } from '../lib/supabaseClient'; 
 
 // --- Components ---
 
@@ -34,7 +34,7 @@ const Navbar = ({ currentPage, navigateTo, toggleMobileMenu, isMobileMenuOpen, s
               </button>
             ))}
             
-            {/* Login / Chat Button Logic */}
+            {/* Logic: If logged in show Chat, if not show Login */}
             {!session ? (
               <button
                 onClick={() => navigateTo('login')}
@@ -105,6 +105,7 @@ const LoginPage = ({ navigateTo }: any) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // NOTE: If you are already logged in, this redirects you to chat immediately.
   useEffect(() => {
     const checkSession = async () => {
       const { data: { session } } = await supabase.auth.getSession();
@@ -196,12 +197,6 @@ const LoginPage = ({ navigateTo }: any) => {
 
 const HomePage = ({ navigateTo }: any) => (
   <div className="min-h-screen pt-20 bg-gradient-to-br from-slate-950 via-blue-950 to-slate-900 text-white relative overflow-hidden">
-    {/* Background Animations */}
-    <div className="absolute inset-0 overflow-hidden pointer-events-none">
-      <div className="absolute w-96 h-96 bg-teal-500/10 rounded-full blur-3xl top-20 left-0 animate-pulse"></div>
-      <div className="absolute w-96 h-96 bg-blue-500/10 rounded-full blur-3xl bottom-0 right-0 animate-pulse delay-700"></div>
-    </div>
-
     <div className="relative z-10 max-w-7xl mx-auto px-6 py-20">
       <div className="text-center mb-20">
         <h1 className="text-5xl md:text-7xl font-bold mb-6 bg-gradient-to-r from-teal-400 to-blue-500 bg-clip-text text-transparent">
@@ -278,7 +273,6 @@ const StudentsPage = ({ navigateTo }: any) => (
           actionText="Ask a question"
         />
 
-        {/* Interactive Try Box */}
         <div className="backdrop-blur-xl bg-gradient-to-br from-purple-500/20 to-pink-500/20 border border-purple-500/30 rounded-2xl p-8">
           <h3 className="text-2xl font-bold mb-6">Try it now!</h3>
           <div className="space-y-3">
@@ -409,7 +403,7 @@ const ContactPage = () => {
   );
 };
 
-const ChatPage = ({ initialMessage }: any) => {
+const ChatPage = ({ initialMessage, navigateTo }: any) => {
   const [messages, setMessages] = useState([{ type: 'ai', text: "Hello! I'm School AI by TDS Data Labs. How can I help you today?" }]);
   const [inputValue, setInputValue] = useState(initialMessage || "");
   const [isLoading, setIsLoading] = useState(false);
@@ -436,6 +430,11 @@ const ChatPage = ({ initialMessage }: any) => {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    navigateTo('home');
   };
 
   const handleKeyDown = (e: any) => {
@@ -475,12 +474,17 @@ const ChatPage = ({ initialMessage }: any) => {
                 </div>
               </div>
             </div>
-            <button onClick={exportChat} className="px-4 py-2 bg-emerald-500/20 border border-emerald-500/30 rounded-lg hover:bg-emerald-500/30 transition-all flex items-center gap-2">
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
-              </svg>
-              Export
-            </button>
+            <div className="flex gap-2">
+              <button onClick={handleLogout} className="px-4 py-2 border border-red-500/30 text-red-300 rounded-lg hover:bg-red-500/10 transition-all text-sm">
+                Logout
+              </button>
+              <button onClick={exportChat} className="px-4 py-2 bg-emerald-500/20 border border-emerald-500/30 rounded-lg hover:bg-emerald-500/30 transition-all flex items-center gap-2 text-sm">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+                </svg>
+                Export
+              </button>
+            </div>
           </div>
         </div>
 
@@ -698,7 +702,6 @@ const App = () => {
 
   // Check Supabase session
   useEffect(() => {
-    // FIX: Added ": any" to response to satisfy TypeScript
     supabase.auth.getSession().then((response: any) => {
       setSession(response.data.session);
     });
@@ -711,7 +714,7 @@ const App = () => {
 
     return () => subscription.unsubscribe();
   }, []);
-  
+
   const navigateTo = (page: string, initialMsg = '') => {
     setCurrentPage(page);
     setIsMobileMenuOpen(false);
@@ -740,10 +743,11 @@ const App = () => {
         {currentPage === 'students' && <StudentsPage navigateTo={navigateTo} />}
         {currentPage === 'teachers' && <TeachersPage />}
         {currentPage === 'contact' && <ContactPage />}
-        {currentPage === 'chat' && <ChatPage initialMessage={chatInitialMessage} />}
+        {currentPage === 'chat' && <ChatPage initialMessage={chatInitialMessage} navigateTo={navigateTo} />}
         {currentPage === 'login' && <LoginPage navigateTo={navigateTo} />}
       </main>
 
+      {/* Hide floating widget on chat page and login page */}
       {currentPage !== 'chat' && currentPage !== 'login' && <FloatingChatWidget />}
     </div>
   );
